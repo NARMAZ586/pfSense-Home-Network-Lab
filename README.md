@@ -18,7 +18,7 @@ This lab demonstrates pfSense running as the router for a home network, virtuali
 4. [Verification](#verification)
 
 # Hardware
-![Proxmox host back panel](images/hardware/back-panel-labeled.jpg)
+![Proxmox host back panel](images/back-panel-labeled.jpg)
 
 | Component | Details | Role |
 | --- | --- | --- |
@@ -100,8 +100,8 @@ Rows are the source, columns are the destination.
 # Build Walkthrough
 Each phase below should be enough to reproduce the work shown in this lab.
 
-## Phase 1: Cutover - pfSense becomes the main router
-![Proxmox network bridges](images/proxmox/network-bridges.png)
+## Phase 1: pfSense becomes the main router
+![Proxmox network bridges](images/network-bridges.png)
 
 1. Proxmox bridges: `vmbr1` on NC360T port 1 (WAN), `vmbr2` on port 2 (LAN), both with no host IP. `vmbr0` keeps the host's management IP.
 2. pfSense VM NICs: `net0` on `vmbr1`, `net1` on `vmbr2`, model VirtIO.
@@ -117,7 +117,7 @@ ping -c 4 8.8.8.8       # WAN routing
 ping -c 4 google.com    # DNS
 ```
 
-![pfSense dashboard after cutover](images/pfsense/dashboard.png)
+![pfSense dashboard after cutover](images/dashboard.png)
 
 ## Phase 2: Baseline settings
 | Setting | Value |
@@ -137,8 +137,8 @@ ping -c 4 google.com    # DNS
   - Host overrides for static hosts: `proxmox.home.arpa`, `wazuh.home.arpa`
   - Network interfaces: All, so VLAN and VPN clients can query their gateway
 
-![DHCP static mappings](images/pfsense/dhcp-static-mappings.png)
-![DNS host overrides](images/pfsense/dns-host-overrides.png)
+![DHCP static mappings](images/dhcp-static-mappings.png)
+![DNS host overrides](images/dns-host-overrides.png)
 
 ## Phase 4: VLANs (router-on-a-stick)
 1. Proxmox: Create > Linux Bridge `vmbr4` with no IP, no bridge ports and **VLAN aware** checked, then click **Apply Configuration**. Next step may not be needed, but the bridge might need the configuration below to properly apply
@@ -159,7 +159,7 @@ iface vmbr4 inet manual
 
 The bridge has no physical port on purpose: tagged frames never reach the access point, which would drop or leak them.
 
-![pfSense interface assignments](images/pfsense/interface-assignments.png)
+![pfSense interface assignments](images/interface-assignments.png)
 
 ## Phase 5: Zone rules
 1. Alias `RFC1918` (Firewall > Aliases): `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`. These are the standard private IPv4 ranges.
@@ -187,8 +187,8 @@ The bridge has no physical port on purpose: tagged frames never reach the access
 
 Rules go on the interface where a connection starts. Replies are allowed automatically because pfSense is stateful.
 
-![LAB rules](images/pfsense/rules-lab.png)
-![VLAN10 rules](images/pfsense/rules-vlan10.png)
+![LAB rules](images/rules-lab.png)
+![VLAN10 rules](images/rules-vlan10.png)
 
 ## Phase 6: WireGuard remote access
 **pfSense**
@@ -229,7 +229,7 @@ AllowedIPs = <LAN subnet>, <WireGuard subnet>
 PersistentKeepalive = 25
 ```
 
-![WireGuard status](images/pfsense/wireguard-status.png)
+![WireGuard status](images/wireguard-status.png)
 
 ## Phase 7: Debian test VMs
 | Setting | `debian-vlan10` | `debian-vlan20` |
@@ -271,8 +271,7 @@ In pfSense: Status > System Logs > Settings > Remote Logging, source address LAN
 
 **Agents on the VLAN VMs:** deployed from the Wazuh dashboard (Deploy new agent, DEB amd64). The lab VMs are blocked from the house LAN, so a narrow exception (LAB rule 4: TCP 1514-1515 to the Wazuh VM) is placed above the house block. Port 1514 carries agent data and 1515 is used for enrollment.
 
-![Wazuh agents active](images/wazuh/agents-active.png)
-![pfSense event in Wazuh](images/wazuh/pfsense-event.png)
+![Wazuh agents active](images/agents-active.png)
 
 # Verification
 | # | From | Command | Expected |
